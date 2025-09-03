@@ -1,0 +1,8 @@
+langchain
+langchain-google-genai
+langchain-community
+gradio
+python-dotenv
+beautifulsoup4
+google-search-results
+google-api-python-client>=2.100.0
