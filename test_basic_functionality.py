@@ -48,15 +48,52 @@ def test_environment():
         print("   Crie um arquivo .env com sua chave da API do Google")
         return False
 
+def test_conversation_memory():
+    """Testa a nova funcionalidade de memória do agente de conversação."""
+    print("\n🧠 Testando a memória da conversação...")
+    try:
+        from agents.general_tutor_agent import create_general_tutor_agent
+        
+        # Cria uma nova instância do agente para o teste
+        tutor_agent = create_general_tutor_agent()
+        
+        # Simula os inputs da conversa
+        input1 = "Ciao! Il mio nome è Marco."
+        input2 = "Qual è il mio nome?"
+        
+        # Executa a cadeia de conversação
+        response1 = tutor_agent.predict(input=input1)
+        print(f"   - Input 1: '{input1}'")
+        print(f"   - Resposta do Tutor 1: '{response1[:50]}...'") # Mostra apenas o início
+        
+        response2 = tutor_agent.predict(input=input2)
+        print(f"   - Input 2: '{input2}'")
+        print(f"   - Resposta do Tutor 2: '{response2}'")
+        
+        # Verifica se a resposta contém a informação memorizada
+        if "marco" in response2.lower():
+            print("✅ Teste de memória passou! O agente lembrou o nome.")
+            return True
+        else:
+            print("❌ Teste de memória falhou. O agente não lembrou o nome.")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Erro durante o teste de memória: {e}")
+        return False
+
 def main():
     """Executa todos os testes."""
     print("🚀 Iniciando testes básicos do Tutor de Italiano IA...\n")
     
     imports_ok = test_imports()
     env_ok = test_environment()
+    memory_ok = False
+    if imports_ok and env_ok:
+        memory_ok = test_conversation_memory()
     
     print("\n" + "="*50)
-    if imports_ok and env_ok:
+    if imports_ok and env_ok and memory_ok:
         print("✅ Todos os testes passaram! O projeto está pronto para uso.")
         print("Execute 'python main.py' para iniciar a aplicação.")
     else:
@@ -65,4 +102,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

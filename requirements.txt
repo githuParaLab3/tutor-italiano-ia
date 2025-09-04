@@ -4,3 +4,4 @@ langchain-community
 gradio
 python-dotenv
 beautifulsoup4
+gTTS

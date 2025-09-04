@@ -13,6 +13,7 @@ Você é um roteador de conversas. Dado o seguinte input do usuário, decida qua
 - 'gramatica': Se o usuário pedir uma explicação sobre um conceito gramatical específico.
 - 'recomendacao': Se o usuário pedir sugestões de filmes, séries, livros ou músicas em italiano.
 - 'pesquisa': Se o usuário fizer uma pergunta sobre história, geografia, cultura italiana ou qualquer tópico que exija uma resposta mais elaborada que uma simples conversa.
+- 'roleplay': Se o usuário pedir para simular, praticar, ou encenar uma conversa em um cenário específico (ex: "vamos praticar uma conversa em um restaurante", "simular uma compra em uma loja").
 
 Retorne apenas o nome da categoria. Não adicione nenhuma outra informação.
 
