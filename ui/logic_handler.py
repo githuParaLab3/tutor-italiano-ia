@@ -32,22 +32,35 @@ class LogicHandler:
         self.lessons_agent = create_lessons_agent()
 
     def process_message(self, message, history):
+        history.append([message, "🤔 Pensando..."])
+        yield history, ""
+
         try:
-            if not message: return history, ""
+            if not message:
+                history.pop()
+                yield history, ""
+                return
+
             route = self.router_agent.run(user_input=message).strip().lower()
             response = ""
+
             if route == "traducao": response = self.translation_agent.run(text=message, language="auto")
             elif route == "quiz": response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
             elif route == "gramatica": response = self.grammar_agent.run(concept=message)
             elif route == "recomendacao": response = self.recommendation_agent.run(interest=message)
             elif route == "pesquisa": response = self.general_tutor_chain.predict(input=f"Responda a seguinte pergunta sobre cultura italiana: {message}")
             else: response = self.general_tutor_chain.predict(input=message)
-            history.append([message, response])
-            return history, ""
+
+            history[-1][1] = response
+            yield history, ""
+
         except Exception as e:
             error_message = f"❌ Desculpe, ocorreu um erro inesperado: {str(e)}"
-            history.append([message, error_message])
-            return history, ""
+            if history:
+                history[-1][1] = error_message
+            else:
+                history.append([message, error_message])
+            yield history, ""
     
     def generate_audio_from_selection(self, evt: gr.SelectData):
         if evt.value and evt.index[1] is not None:
@@ -57,14 +70,24 @@ class LogicHandler:
         return None
 
     def quick_translation(self, text):
-        if not text: return "📝 Por favor, digite o texto para traduzir."
-        try: return self.translation_agent.run(text=text, language="auto")
-        except Exception as e: return f"❌ Erro na tradução: {str(e)}"
+        if not text:
+            yield "📝 Por favor, digite o texto para traduzir."
+            return
+        yield "🔄 Traduzindo..."
+        try:
+            yield self.translation_agent.run(text=text, language="auto")
+        except Exception as e:
+            yield f"❌ Erro na tradução: {str(e)}"
 
     def quick_recommendation(self, interest):
-        if not interest: return "🎯 Por favor, digite seus interesses para receber recomendações."
-        try: return self.recommendation_agent.run(interest=interest)
-        except Exception as e: return f"❌ Erro ao gerar recomendação: {str(e)}"
+        if not interest:
+            yield "🎯 Por favor, digite seus interesses para receber recomendações."
+            return
+        yield "🧠 Buscando recomendações..."
+        try:
+            yield self.recommendation_agent.run(interest=interest)
+        except Exception as e:
+            yield f"❌ Erro ao gerar recomendação: {str(e)}"
 
     def _get_question_ui_updates(self, question):
         if question['type'] == 'multipla_escolha':
@@ -82,7 +105,18 @@ class LogicHandler:
         return question.get("pergunta", ""), gr.update(visible=False), gr.update(visible=False)
 
     def start_quiz(self, topic):
-        if not topic: topic = "cultura e gramática básica"
+        if not topic:
+            topic = "cultura e gramática básica"
+
+        # Show a loading message in the summary text area
+        yield (
+            None, 0, 0, # states
+            gr.update(visible=False), gr.update(visible=True), # wrappers
+            "", gr.update(), gr.update(), # question elements
+            "", gr.update(), gr.update(), # feedback and buttons
+            "🎲 Gerando seu quiz, por favor aguarde..." # summary text
+        )
+
         try:
             raw_response = self.quiz_agent.run(topic=topic)
             json_match = re.search(r'```json\n({.*?})\n```', raw_response, re.DOTALL)
@@ -90,7 +124,8 @@ class LogicHandler:
             quiz_data = json.loads(json_str)
             first_question = quiz_data["quiz"][0]
             q_text_update, choices_update, fill_in_update = self._get_question_ui_updates(first_question)
-            return (
+
+            yield (
                 quiz_data, 0, 0,
                 gr.update(visible=True), gr.update(visible=False),
                 q_text_update, choices_update, fill_in_update,
@@ -98,7 +133,12 @@ class LogicHandler:
             )
         except Exception as e:
             error_message = f"❌ Desculpe, não consegui gerar o quiz. Tente novamente.\nErro: {str(e)}"
-            return None, 0, 0, gr.update(visible=False), gr.update(visible=True), "", gr.update(), gr.update(), "", gr.update(), gr.update(), error_message
+            yield (
+                None, 0, 0,
+                gr.update(visible=False), gr.update(visible=True),
+                "", gr.update(), gr.update(),
+                "", gr.update(), gr.update(), error_message
+            )
 
     def submit_answer(self, mc_choice, fill_in_answer, quiz_data, current_question_index, score):
         question_info = quiz_data["quiz"][current_question_index]
@@ -133,25 +173,42 @@ class LogicHandler:
             )
 
     def start_simulation(self, scenario):
-        if not scenario: return None, [], gr.update(visible=True), gr.update(visible=False)
+        if not scenario:
+            yield None, [], gr.update(visible=True), gr.update(visible=False)
+            return
+        
+        # Show loading state in the chatbot
+        initial_history_loading = [[None, "🎭 Preparando a simulação, aguarde..."]]
+        yield None, initial_history_loading, gr.update(visible=False), gr.update(visible=True)
+
         try:
             agent = create_roleplay_agent()
             initial_response = agent.predict(input=scenario)
             initial_history = [[None, initial_response]]
-            return agent, initial_history, gr.update(visible=False), gr.update(visible=True)
+            yield agent, initial_history, gr.update(visible=False), gr.update(visible=True)
         except Exception as e:
-            print(f"Erro ao iniciar simulação: {e}")
-            return None, [], gr.update(visible=True), gr.update(visible=False)
+            error_message = f"❌ Erro ao iniciar simulação: {e}"
+            yield None, [[None, error_message]], gr.update(visible=True), gr.update(visible=False)
 
     def process_roleplay_message(self, message, history, agent):
-        if not message or not agent: return history, ""
+        if not message or not agent:
+            yield history, ""
+            return
+            
+        history.append([message, "🤔 Pensando..."])
+        yield history, ""
+
         try:
             response = agent.predict(input=message)
-            history.append([message, response])
-            return history, ""
+            history[-1][1] = response
+            yield history, ""
         except Exception as e:
-            history.append([message, f"❌ Desculpe, ocorreu um erro na simulação: {str(e)}"])
-            return history, ""
+            error_message = f"❌ Desculpe, ocorreu um erro na simulação: {str(e)}"
+            if history:
+                history[-1][1] = error_message
+            else:
+                history.append([message, error_message])
+            yield history, ""
 
     def end_simulation(self):
         return None, [], gr.update(visible=True), gr.update(visible=False), ""

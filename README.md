@@ -2,11 +2,11 @@
 
 Um agente de IA completo para aprendizado de italiano, construído com LangChain e Gradio, oferecendo uma experiência educativa interativa, estruturada e personalizada.
 
-## 📋 Visão Geral
+## Visão Geral
 
 O **Tutor de Italiano IA** é uma aplicação educativa avançada que utiliza inteligência artificial para ensinar italiano de forma interativa e personalizada. O projeto combina o poder do modelo Gemini do Google com uma interface web intuitiva criada em Gradio, oferecendo múltiplas funcionalidades educativas numa arquitetura modular e extensível.
 
-### 🎯 Propósito
+### Propósito
 
 Este projeto foi desenvolvido para:
 
@@ -16,7 +16,7 @@ Este projeto foi desenvolvido para:
 - Disponibilizar recursos educativos diversificados numa única plataforma.
 - Demonstrar a aplicação prática de LangChain e Gradio em projetos educacionais.
 
-### ✨ Funcionalidades Principais
+### Funcionalidades Principais
 
 1. **Chat Inteligente com Memória**: Converse em italiano com um tutor que se lembra do contexto da conversa, oferece correções e explicações gramaticais.
 2. **Plano de Estudos Estruturado**: Currículo completo do nível A1 ao C2, com lições detalhadas sobre gramática, vocabulário e exercícios.
@@ -26,7 +26,7 @@ Este projeto foi desenvolvido para:
 6. **Recomendações Culturais**: Sugestões de filmes, séries, livros e músicas italianas, com nível de dificuldade e onde encontrar.
 7. **Prática de Pronúncia (Text-to-Speech)**: Ouça a pronúncia correta de qualquer resposta do tutor com gTTS.
 
-### 🛠️ Tecnologias Utilizadas
+### Tecnologias Utilizadas
 
 - **LangChain**: Framework para desenvolvimento de aplicações com LLMs.
 - **Google Gemini**: Modelo de linguagem avançado via `langchain-google-genai`.
@@ -34,7 +34,7 @@ Este projeto foi desenvolvido para:
 - **gTTS**: Biblioteca do Google para funcionalidade de Text-to-Speech.
 - **Python**: Linguagem de programação principal.
 
-## 🔧 Requisitos de Sistema
+## Requisitos de Sistema
 
 ### Pré-requisitos
 
@@ -65,7 +65,7 @@ Crie um arquivo `.env` na raiz do projeto com a sua chave da API do Google:
 GOOGLE_API_KEY=sua_chave_da_api_do_google_aqui
 ```
 
-## 📁 Estrutura de Ficheiros
+## Estrutura de Ficheiros
 
 O projeto foi refatorado para uma arquitetura mais limpa e modular, especialmente na interface do utilizador.
 
@@ -115,7 +115,7 @@ tutor-italiano-ia/
 
 ### Descrição dos Componentes
 
-#### 📂 `agents/`
+#### `agents/`
 
 Contém todos os agentes especializados do sistema:
 
@@ -129,19 +129,19 @@ Contém todos os agentes especializados do sistema:
 - **`router_agent.py`**: Roteamento inteligente das mensagens entre agentes.
 - **`translation_agent.py`**: Traduções com contexto entre português e italiano.
 
-#### 📂 `core/`
+#### `core/`
 
 - **`curriculum.py`**: Estrutura do currículo do A1 ao C2 e mapeamento de tópicos.
 
-#### 📂 `prompts/`
+#### `prompts/`
 
 Templates de prompts organizados por funcionalidade, permitindo fácil manutenção e personalização.
 
-#### 📂 `ui/`
+#### `ui/`
 
 Interface do usuário construída com Gradio, oferecendo abas e componentes para cada modo de aprendizado.
 
-## 🚀 Como Executar: Um Guia Detalhado
+##  Como Executar: Um Guia Detalhado
 
 Para colocar o Tutor de Italiano IA em funcionamento, siga este guia passo a passo.
 
@@ -192,24 +192,24 @@ python main.py
 
 Após o carregamento, normalmente será exibida uma URL local, por exemplo: `http://127.0.0.1:7860`. Abra essa URL no navegador para acessar a interface do Tutor de Italiano IA.
 
-## 🎮 Como Usar
+## Como Usar
 
 A interface oferece abas dedicadas para diferentes modos de aprendizado:
 
-- 💬 **Chat Inteligente**
+-  **Chat Inteligente**
   - Converse livremente com o tutor.
   - Peça explicações, traduções ou correções.
   - Clique em qualquer resposta do tutor para ouvir a pronúncia.
 
-- 📚 **Plano de Estudos**
+-  **Plano de Estudos**
   - Escolha o seu nível de proficiência (A1 a C2).
   - Selecione um tópico específico e receba uma lição completa.
 
-- 🎭 **Simulação (Role-play)**
+- **Simulação (Role-play)**
   - Descreva um cenário que queira praticar.
   - A IA assume um papel e conduz a simulação.
 
-- ⚡ **Ferramentas Rápidas**
+-  **Ferramentas Rápidas**
   - Tradutor contextual.
   - Quizzes dinâmicos.
   - Recomendações culturais.
@@ -236,7 +236,7 @@ a) sono  b) sei  c) è  d) siamo
 Resposta correta: a) sono"
 ```
 
-## 🛠️ Desenvolvimento e Extensão
+## Desenvolvimento e Extensão
 
 ### Adicionando Novos Agentes
 
@@ -253,7 +253,7 @@ Edite os arquivos em `prompts/` e rode os testes para verificar o comportamento.
 
 Você pode adicionar utilitários em uma pasta `tools/` e integrá-los aos agentes conforme necessário.
 
-## 🧭 Solução de Problemas Comuns
+## Solução de Problemas Comuns
 
 **Erro: "GOOGLE_API_KEY not found"**
 - Verifique se o `.env` existe na raiz do projeto.
@@ -268,7 +268,7 @@ Você pode adicionar utilitários em uma pasta `tools/` e integrá-los aos agent
 - Verifique se a porta 7860 não está em uso.
 - Tente `http://localhost:7860` ou `http://127.0.0.1:7860`.
 
-## 🤝 Contribuição
+## Contribuição
 
 Contribuições são bem-vindas! Para contribuir:
 
@@ -287,7 +287,7 @@ git push origin feature/nova-funcionalidade
 ```
 5. Abra um Pull Request.
 
-## 🆘 Suporte
+## Suporte
 
 Se encontrar problemas ou tiver dúvidas:
 
@@ -297,13 +297,6 @@ Se encontrar problemas ou tiver dúvidas:
    - LangChain: https://python.langchain.com/
    - Gradio: https://gradio.app/
    - Google AI: https://ai.google.dev/
-
-## 🙏 Agradecimentos
-
-- **Google**: Pelo modelo Gemini e APIs.
-- **LangChain**: Framework para aplicações de IA.
-- **Gradio**: Interface web simples e poderosa.
-- **Comunidade Python**: Pelas bibliotecas e ferramentas.
 
 ---
 
