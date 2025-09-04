@@ -165,7 +165,7 @@ Após iniciar, você verá algo como:
 ✅ Variáveis de ambiente configuradas corretamente!
 🚀 Carregando a interface...
 🌐 Iniciando o servidor...
-Running on local URL:  http://127.0.0.0:7860
+Running on local URL:  http://127.0.0.1:7860
 ```
 Abra seu navegador e acesse a URL indicada para começar a usar a interface.
 
