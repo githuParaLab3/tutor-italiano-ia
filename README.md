@@ -291,9 +291,8 @@ git push origin feature/nova-funcionalidade
 
 Se encontrar problemas ou tiver dúvidas:
 
-1. Verifique a seção de **Solução de Problemas**.
-2. Execute o script de teste: `python test_basic_functionality.py`.
-3. Consulte a documentação das dependências:
+1. Execute o script de teste: `python test_basic_functionality.py`.
+2. Consulte a documentação das dependências:
    - LangChain: https://python.langchain.com/
    - Gradio: https://gradio.app/
    - Google AI: https://ai.google.dev/
