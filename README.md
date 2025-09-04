@@ -243,7 +243,7 @@ Resposta correta: a) sono"
 1. Crie o arquivo do agente em `agents/`.
 2. Defina o prompt em `prompts/`.
 3. Atualize o `router_agent.py`.
-4. Integre na interface Gradio em `ui/main_interface.py`.
+4. Integre na interface Gradio em `ui/`.
 
 ### Personalizando Prompts
 
