@@ -124,72 +124,50 @@ Interface do usuário construída com Gradio, oferecendo uma experiência web in
 
 ## 🚀 Como Executar: Um Guia Detalhado
 
-Para colocar o Tutor de Italiano IA em funcionamento, siga este guia passo a passo. Cada etapa é explicada em detalhes para garantir que você consiga executar o projeto sem problemas.
+Para colocar o Tutor de Italiano IA em funcionamento, siga este guia passo a passo.
 
 ### 1. Clone ou Baixe o Projeto
-
-**O que é isso?**
-É o ato de copiar todos os arquivos do projeto para o seu computador.
-
-**Como fazer:**
-Se você tem Git, use o comando `git clone <URL_DO_REPOSITÓRIO>`. Se não, baixe o arquivo `.zip` que enviei e descompacte-o.
+Copie todos os arquivos do projeto para o seu computador.  
+- Com Git: `git clone <URL_DO_REPOSITORIO>`  
+- Sem Git: baixe e descompacte o `.zip`.
 
 ### 2. Crie um Ambiente Virtual
-
-**O que é isso?**
-É uma "caixa" isolada para as dependências do projeto. Isso evita que as bibliotecas deste projeto interfiram com outros projetos Python que você possa ter.
-
-**Como fazer:**
-Abra o terminal (ou Prompt de Comando) na pasta do projeto.
-Digite `python -m venv venv`.
-Ative-o: no Windows, use `.\venv\Scripts\activate`; no Linux/macOS, use `source venv/bin/activate`.
+Crie um ambiente isolado para as dependências do projeto.  
+Abra o terminal na pasta do projeto e digite:  
+`python -m venv venv`  
+Ative-o:  
+- Windows: `.\venv\Scripts\activate`  
+- Linux/macOS: `source venv/bin/activate`
 
 ### 3. Instale as Dependências
-
-**O que é isso?**
-O projeto precisa de bibliotecas externas (como LangChain e Gradio) para funcionar. Este passo instala todas elas de uma vez.
-
-**Como fazer:**
-Com o ambiente virtual ativado, digite `pip install -r requirements.txt` no terminal. Ele lerá o arquivo `requirements.txt` e instalará tudo o que for necessário.
+Com o ambiente virtual ativado, digite:  
+`pip install -r requirements.txt`
 
 ### 4. Configure as Variáveis de Ambiente
-
-**O que é isso?**
-Sua chave de API do Google é um segredo que não deve ser escrito diretamente no código. Nós a armazenamos em um arquivo `.env` que é ignorado pelo sistema de controle de versão.
-
-**Como fazer:**
-2. Abra ou crie o arquivo `.env` com um editor de texto.
-3. Cole sua chave da API do Google no lugar de `your_google_api_key_here`.
+Crie ou edite o arquivo `.env` na pasta do projeto e adicione sua chave da API do Google:  
+`GOOGLE_API_KEY=your_google_api_key_here`
 
 ### 5. Execute o Teste Básico (Opcional)
-
-**O que é isso?**
-Um script rápido para garantir que tudo foi configurado corretamente antes de iniciar a aplicação completa.
-
-**Como fazer:**
-No terminal, digite `python test_basic_functionality.py`. Se aparecerem mensagens de erro, elas indicarão o que deu errado (geralmente, uma dependência faltando ou a chave de API não encontrada).
+Para verificar se tudo está correto, digite:  
+`python test_basic_functionality.py`  
+Se houver erros, verifique dependências ou a chave de API.
 
 ### 6. Inicie a Aplicação
-
-**O que é isso?**
-Este comando inicia o servidor web local que executa a interface do Gradio, tornando o agente acessível no seu navegador.
-
-**Como fazer:**
-No terminal, digite `python main.py`. Após algumas mensagens, ele mostrará uma URL local (como `http://127.0.0.1:7860`). Copie e cole essa URL no seu navegador para começar a usar o tutor!
+Digite no terminal:  
+`python main.py`  
+Após algumas mensagens, será exibida uma URL local, normalmente: `http://127.0.0.1:7860`. Abra essa URL no navegador para acessar a interface do Tutor de Italiano IA.
 
 ### Acesso à Interface
-
-Após iniciar a aplicação, você verá uma mensagem similar a:
+Após iniciar, você verá algo como:  
 
 ```
 🇮🇹 Iniciando o Tutor de Italiano IA...
 ✅ Variáveis de ambiente configuradas corretamente!
 🚀 Carregando a interface...
 🌐 Iniciando o servidor...
-Running on local URL:  http://127.0.0.1:7860
+Running on local URL:  http://127.0.0.0:7860
 ```
-
-Abra seu navegador e acesse `http://127.0.0.1:7860` para usar a interface.
+Abra seu navegador e acesse a URL indicada para começar a usar a interface.
 
 ### Solução de Problemas Comuns
 
