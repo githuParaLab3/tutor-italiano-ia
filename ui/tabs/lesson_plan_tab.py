@@ -1,7 +1,7 @@
 import gradio as gr
 from core.curriculum import get_levels
 
-def create_lesson_plan_tab():
+def create_lesson_plan_tab(logic_handler): # Adicionado logic_handler
     with gr.TabItem("📚 Plano de Estudos"):
         gr.Markdown("### <span class='tool-heading'>📚 Seu Roteiro de Aprendizado</span>")
         with gr.Row():

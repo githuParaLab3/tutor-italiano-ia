@@ -18,13 +18,13 @@ def create_main_interface():
         gr.Markdown("<span class='sub-heading'>Sua jornada personalizada para dominar o italiano com inteligência artificial 🚀</span>")
 
         with gr.Tabs(elem_classes=["tabs"]):
-            # Criar as UIs de cada aba
-            chatbot, msg, send_btn, clear, audio_output = create_chat_tab()
-            level_dropdown, topic_dropdown, lesson_btn, lesson_output = create_lesson_plan_tab()
-            rp_state, rp_setup, rp_scenario, rp_start, rp_chat, rp_chatbot, rp_audio, rp_msg, rp_send, rp_end = create_roleplay_tab()
-            tools_cmps = create_quick_tools_tab()
+            # CORREÇÃO: Passar o logic_handler para cada função de criação de aba
+            chatbot, msg, send_btn, clear, audio_output = create_chat_tab(logic_handler)
+            level_dropdown, topic_dropdown, lesson_btn, lesson_output = create_lesson_plan_tab(logic_handler)
+            rp_state, rp_setup, rp_scenario, rp_start, rp_chat, rp_chatbot, rp_audio, rp_msg, rp_send, rp_end = create_roleplay_tab(logic_handler)
+            tools_cmps = create_quick_tools_tab(logic_handler)
 
-        # --- Central de Event Listeners ---
+        # --- Central de Event Listeners (aqui permanece igual) ---
         
         # Aba de Chat
         msg.submit(logic_handler.process_message, [msg, chatbot], [chatbot, msg])

@@ -1,6 +1,6 @@
 import gradio as gr
 
-def create_roleplay_tab():
+def create_roleplay_tab(logic_handler): # Adicionado logic_handler
     with gr.TabItem("🎭 Simulação (Role-play)"):
         roleplay_agent_state = gr.State()
         with gr.Column(visible=True) as roleplay_setup_wrapper:

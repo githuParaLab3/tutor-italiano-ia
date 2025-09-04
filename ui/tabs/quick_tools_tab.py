@@ -1,6 +1,6 @@
 import gradio as gr
 
-def create_quick_tools_tab():
+def create_quick_tools_tab(logic_handler): # Adicionado logic_handler
     with gr.TabItem("⚡ Ferramentas Rápidas"):
         quiz_data_state = gr.State()
         quiz_score_state = gr.State()
@@ -10,7 +10,8 @@ def create_quick_tools_tab():
             with gr.Column(elem_classes=["quick-tools-section"]):
                 gr.Markdown("### <span class='tool-heading'>🔄 Tradutor Profissional</span>")
                 translation_input = gr.Textbox(placeholder="✍️ Digite ou cole o texto...", label="📝 Texto para Tradução", lines=3)
-                translation_output = gr.Textbox(label="🎯 Resultado", interactive=False, lines=4)
+                # CORREÇÃO FINAL: Usar gr.Markdown para renderizar a formatação
+                translation_output = gr.Markdown(label="🎯 Resultado")
                 translate_btn = gr.Button("🔄 Traduzir Agora", elem_classes=["button-primary"])
             with gr.Column(elem_classes=["quick-tools-section"]):
                 gr.Markdown("### <span class='tool-heading'>🧠 Quiz Interativo</span>")
@@ -30,7 +31,8 @@ def create_quick_tools_tab():
             with gr.Column(elem_classes=["quick-tools-section"]):
                 gr.Markdown("### <span class='tool-heading'>✨ Recomendações IA</span>")
                 interest_input = gr.Textbox(placeholder="🎬 Ex: cinema, música, culinária...", label="🎯 Seus Interesses")
-                recommendation_output = gr.Textbox(label="🌟 Recomendações", interactive=False, lines=6)
+                # CORREÇÃO FINAL: Usar gr.Markdown para renderizar a formatação
+                recommendation_output = gr.Markdown(label="🌟 Recomendações")
                 recommend_btn = gr.Button("✨ Descobrir Conteúdo", elem_classes=["button-primary"])
 
     components = {
