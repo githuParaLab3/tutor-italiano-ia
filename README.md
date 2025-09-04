@@ -24,7 +24,7 @@ Este projeto foi desenvolvido para:
 3. **Quizzes Interativos**: Geração automática de quizzes de múltipla escolha e preenchimento de lacunas
 4. **Aulas de Gramática**: Explicações detalhadas de conceitos gramaticais específicos
 5. **Recomendações Culturais**: Sugestões personalizadas de filmes, séries, livros e músicas italianas
-6. **Pesquisa Inteligente**: Integração com pesquisa web para responder perguntas sobre cultura italiana
+6. **Respostas sobre Cultura**: O agente usa seu conhecimento interno para responder perguntas sobre cultura, história e geografia da Itália.
 
 ### 🛠️ Tecnologias Utilizadas
 
@@ -32,8 +32,6 @@ Este projeto foi desenvolvido para:
 - **Google Gemini**: Modelo de linguagem avançado via langchain-google-genai
 - **Gradio**: Interface web interativa e responsiva
 - **Python**: Linguagem de programação principal
-- **Google Search API**: Para funcionalidades de pesquisa web (opcional)
-
 
 ## 🔧 Requisitos de Sistema
 
@@ -55,7 +53,6 @@ langchain-community
 gradio
 python-dotenv
 beautifulsoup4
-google-search-results
 ```
 
 ### Variáveis de Ambiente
@@ -63,11 +60,7 @@ google-search-results
 Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 
 ```env
-# Obrigatório
 GOOGLE_API_KEY=sua_chave_da_api_do_google_aqui
-
-# Opcional (para funcionalidades de pesquisa web)
-GOOGLE_CSE_ID=seu_id_do_custom_search_engine_aqui
 ```
 
 ### Como Obter as Chaves de API
@@ -77,22 +70,15 @@ GOOGLE_CSE_ID=seu_id_do_custom_search_engine_aqui
    - Crie uma nova chave de API
    - Copie a chave gerada
 
-2. **Google Custom Search Engine ID (Opcional)**:
-   - Acesse [Google Custom Search](https://cse.google.com/)
-   - Crie um novo mecanismo de pesquisa
-   - Copie o ID do mecanismo criado
-
-
 ## 📁 Estrutura de Arquivos
 
 ```
 tutor-italiano-ia/
 ├── main.py                     # Ponto de entrada principal da aplicação
 ├── requirements.txt            # Dependências Python
-├── .env.example               # Exemplo de configuração de ambiente
+├── .env                        # Sua configuração de ambiente
 ├── test_basic_functionality.py # Script de teste básico
 ├── README.md                  # Documentação principal
-├── todo.md                    # Lista de tarefas do projeto
 │
 ├── agents/                    # Módulos dos agentes de IA
 │   ├── __init__.py
@@ -111,10 +97,6 @@ tutor-italiano-ia/
 │   ├── quiz_prompts.py
 │   ├── grammar_prompts.py
 │   └── recommendation_prompts.py
-│
-├── tools/                     # Ferramentas auxiliares
-│   ├── __init__.py
-│   └── web_search.py          # Ferramenta de pesquisa web
 │
 └── ui/                        # Interface do usuário
     ├── __init__.py
@@ -136,72 +118,47 @@ Contém todos os agentes especializados do sistema:
 #### 📂 `prompts/`
 Templates de prompts organizados por funcionalidade, permitindo fácil manutenção e personalização das instruções para cada agente.
 
-#### 📂 `tools/`
-Ferramentas auxiliares como pesquisa web, que podem ser facilmente estendidas com novas funcionalidades.
-
 #### 📂 `ui/`
 Interface do usuário construída com Gradio, oferecendo uma experiência web interativa e responsiva.
 
 
 ## 🚀 Como Executar: Um Guia Detalhado
 
-Para colocar o Tutor de Italiano IA em funcionamento, siga este guia passo a passo. Cada etapa é explicada em detalhes para garantir que você consiga executar o projeto sem problemas.
+Para colocar o Tutor de Italiano IA em funcionamento, siga este guia passo a passo.
 
 ### 1. Clone ou Baixe o Projeto
-
-**O que é isso?**
-É o ato de copiar todos os arquivos do projeto para o seu computador.
-
-**Como fazer:**
-Se você tem Git, use o comando `git clone <URL_DO_REPOSITÓRIO>`. Se não, baixe o arquivo `.zip` que enviei e descompacte-o.
+Copie todos os arquivos do projeto para o seu computador.  
+- Com Git: `git clone <URL_DO_REPOSITORIO>`  
+- Sem Git: baixe e descompacte o `.zip`.
 
 ### 2. Crie um Ambiente Virtual
-
-**O que é isso?**
-É uma "caixa" isolada para as dependências do projeto. Isso evita que as bibliotecas deste projeto interfiram com outros projetos Python que você possa ter.
-
-**Como fazer:**
-Abra o terminal (ou Prompt de Comando) na pasta do projeto.
-Digite `python -m venv venv`.
-Ative-o: no Windows, use `.\venv\Scripts\activate`; no Linux/macOS, use `source venv/bin/activate`.
+Crie um ambiente isolado para as dependências do projeto.  
+Abra o terminal na pasta do projeto e digite:  
+`python -m venv venv`  
+Ative-o:  
+- Windows: `.\venv\Scripts\activate`  
+- Linux/macOS: `source venv/bin/activate`
 
 ### 3. Instale as Dependências
-
-**O que é isso?**
-O projeto precisa de bibliotecas externas (como LangChain e Gradio) para funcionar. Este passo instala todas elas de uma vez.
-
-**Como fazer:**
-Com o ambiente virtual ativado, digite `pip install -r requirements.txt` no terminal. Ele lerá o arquivo `requirements.txt` e instalará tudo o que for necessário.
+Com o ambiente virtual ativado, digite:  
+`pip install -r requirements.txt`
 
 ### 4. Configure as Variáveis de Ambiente
-
-**O que é isso?**
-Sua chave de API do Google é um segredo que não deve ser escrito diretamente no código. Nós a armazenamos em um arquivo `.env` que é ignorado pelo sistema de controle de versão.
-
-**Como fazer:**
-1. Renomeie ou copie o arquivo `.env.example` para `.env`.
-2. Abra o arquivo `.env` com um editor de texto.
-3. Cole sua chave da API do Google no lugar de `your_google_api_key_here`.
+Crie ou edite o arquivo `.env` na pasta do projeto e adicione sua chave da API do Google:  
+`GOOGLE_API_KEY=your_google_api_key_here`
 
 ### 5. Execute o Teste Básico (Opcional)
-
-**O que é isso?**
-Um script rápido para garantir que tudo foi configurado corretamente antes de iniciar a aplicação completa.
-
-**Como fazer:**
-No terminal, digite `python test_basic_functionality.py`. Se aparecerem mensagens de erro, elas indicarão o que deu errado (geralmente, uma dependência faltando ou a chave de API não encontrada).
+Para verificar se tudo está correto, digite:  
+`python test_basic_functionality.py`  
+Se houver erros, verifique dependências ou a chave de API.
 
 ### 6. Inicie a Aplicação
-
-**O que é isso?**
-Este comando inicia o servidor web local que executa a interface do Gradio, tornando o agente acessível no seu navegador.
-
-**Como fazer:**
-No terminal, digite `python main.py`. Após algumas mensagens, ele mostrará uma URL local (como `http://127.0.0.1:7860`). Copie e cole essa URL no seu navegador para começar a usar o tutor!
+Digite no terminal:  
+`python main.py`  
+Após algumas mensagens, será exibida uma URL local, normalmente: `http://127.0.0.1:7860`. Abra essa URL no navegador para acessar a interface do Tutor de Italiano IA.
 
 ### Acesso à Interface
-
-Após iniciar a aplicação, você verá uma mensagem similar a:
+Após iniciar, você verá algo como:  
 
 ```
 🇮🇹 Iniciando o Tutor de Italiano IA...
@@ -210,8 +167,7 @@ Após iniciar a aplicação, você verá uma mensagem similar a:
 🌐 Iniciando o servidor...
 Running on local URL:  http://127.0.0.1:7860
 ```
-
-Abra seu navegador e acesse `http://127.0.0.1:7860` para usar a interface.
+Abra seu navegador e acesse a URL indicada para começar a usar a interface.
 
 ### Solução de Problemas Comuns
 
@@ -241,14 +197,14 @@ O sistema segue uma arquitetura modular baseada em agentes especializados, promo
 │    Gradio       │◄──►│   Inteligente   │◄──►│ Especializados  │
 │                 │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Componentes   │    │    Prompts      │    │   Ferramentas   │
-│      UI         │    │   Templates     │    │   Auxiliares    │
-│                 │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       
+         │                       │                       
+         ▼                       ▼                       
+┌─────────────────┐    ┌─────────────────┐    
+│   Componentes   │    │    Prompts      │       
+│      UI         │    │   Templates     │       
+│                 │    │                 │                  
+└─────────────────┘    └─────────────────┘   
 ```
 
 ### Fluxo de Dados
@@ -256,8 +212,7 @@ O sistema segue uma arquitetura modular baseada em agentes especializados, promo
 1. **Entrada do Usuário**: O usuário interage através da interface Gradio
 2. **Roteamento**: O `router_agent` analisa a mensagem e determina qual agente deve processar
 3. **Processamento**: O agente especializado processa a solicitação usando prompts específicos
-4. **Ferramentas**: Se necessário, ferramentas auxiliares (como pesquisa web) são utilizadas
-5. **Resposta**: O resultado é formatado e retornado através da interface
+4. **Resposta**: O resultado é formatado e retornado através da interface
 
 ### Componentes Principais
 
@@ -280,7 +235,6 @@ Cada agente tem uma responsabilidade específica:
 - Prompts otimizados para cada tipo de tarefa
 
 #### 🔧 Ferramentas
-- **Web Search**: Integração com Google Search API
 - **Extensível**: Arquitetura permite adição de novas ferramentas
 
 ### Vantagens da Arquitetura
@@ -347,7 +301,12 @@ Para criar um novo agente especializado:
 
 Para criar uma nova ferramenta auxiliar:
 
-1. **Crie o arquivo da ferramenta** em `tools/`:
+1. **Crie a pasta `tools/` (se ainda não existir):**
+   ```bash
+   mkdir -p tools
+
+
+2. **Crie o arquivo da ferramenta** em `tools/`:
    ```python
    # tools/nova_ferramenta.py
    import os
@@ -360,7 +319,7 @@ Para criar uma nova ferramenta auxiliar:
        pass
    ```
 
-2. **Integre nos agentes** que precisam da ferramenta:
+3. **Integre nos agentes** que precisam da ferramenta:
    ```python
    from tools.nova_ferramenta import get_nova_ferramenta
    
