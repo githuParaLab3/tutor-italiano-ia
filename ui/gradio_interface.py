@@ -1,13 +1,13 @@
 import gradio as gr
+import json
+import re
 from agents.general_tutor_agent import create_general_tutor_agent
 from agents.translation_agent import create_translation_agent
 from agents.quiz_agent import create_quiz_agent
 from agents.grammar_agent import create_grammar_agent
 from agents.recommendation_agent import create_recommendation_agent
 from agents.router_agent import create_router_agent
-from tools.web_search import get_web_search_tool
 
-# CSS profissional, combinando os melhores elementos dos estilos
 custom_css = """
 /* Importação de fontes Google */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
@@ -178,11 +178,6 @@ class ItalianTutorInterface:
         self.grammar_agent = create_grammar_agent()
         self.recommendation_agent = create_recommendation_agent()
         self.router_agent = create_router_agent()
-        try:
-            self.web_search = get_web_search_tool()
-        except ValueError:
-            self.web_search = None
-            print("Ferramenta de pesquisa web não disponível. Por favor, defina GOOGLE_CSE_ID e GOOGLE_API_KEY.")
 
     def process_message(self, message, history):
         try:
@@ -192,14 +187,13 @@ class ItalianTutorInterface:
             if route == "traducao":
                 response = self.translation_agent.run(text=message, language="auto")
             elif route == "quiz":
-                response = self.quiz_agent.run(quiz_type="múltipla escolha", topic="gramática italiana")
+                response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
             elif route == "gramatica":
                 response = self.grammar_agent.run(concept=message)
             elif route == "recomendacao":
                 response = self.recommendation_agent.run(interest=message)
-            elif route == "pesquisa" and self.web_search:
-                search_results = self.web_search.run(message)
-                response = f"Resultados da pesquisa: {search_results}"
+            elif route == "pesquisa":
+                response = self.general_tutor.run(text=f"Responda a seguinte pergunta sobre cultura italiana: {message}")
             else:
                 response = self.general_tutor.run(text=message)
             history.append([message, response])
@@ -217,12 +211,6 @@ class ItalianTutorInterface:
         except Exception as e:
             return f"❌ Erro na tradução: {str(e)}"
 
-    def quick_quiz(self):
-        try:
-            return self.quiz_agent.run(quiz_type="múltipla escolha", topic="gramática italiana")
-        except Exception as e:
-            return f"❌ Erro ao gerar quiz: {str(e)}"
-
     def quick_recommendation(self, interest):
         if not interest:
             return "🎯 Por favor, digite seus interesses para receber recomendações."
@@ -231,133 +219,167 @@ class ItalianTutorInterface:
         except Exception as e:
             return f"❌ Erro ao gerar recomendação: {str(e)}"
 
+    def start_quiz(self, topic):
+        if not topic:
+            topic = "cultura e gramática básica"
+        
+        try:
+            raw_response = self.quiz_agent.run(topic=topic)
+            
+            json_match = re.search(r'```json\n({.*?})\n```', raw_response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = raw_response
+
+            quiz_data = json.loads(json_str)
+            
+            score = 0
+            current_question_index = 0
+            
+            first_question = quiz_data["quiz"][current_question_index]
+            
+            return {
+                quiz_data_state: quiz_data,
+                quiz_score_state: score,
+                quiz_question_index_state: current_question_index,
+                quiz_container: gr.update(visible=True),
+                start_quiz_wrapper: gr.update(visible=False),
+                quiz_question_text: first_question["pergunta"],
+                quiz_choices: gr.update(choices=first_question["alternativas"], value=None, interactive=True),
+                quiz_feedback_text: "",
+                quiz_submit_button: gr.update(visible=True),
+                quiz_next_button: gr.update(visible=False),
+                quiz_summary_text: ""
+            }
+        except Exception as e:
+            error_message = f"❌ Desculpe, não consegui gerar o quiz. Tente novamente.\nErro: {str(e)}"
+            return {
+                quiz_container: gr.update(visible=False),
+                start_quiz_wrapper: gr.update(visible=True),
+                quiz_summary_text: error_message
+            }
+
+    def submit_answer(self, selected_choice, quiz_data, current_question_index, score):
+        question_info = quiz_data["quiz"][current_question_index]
+        correct_answer = question_info["resposta_correta"]
+        
+        if selected_choice == correct_answer:
+            score += 1
+            feedback = f"<h3>✅ Correto!</h3><p>{question_info['explicacao']}</p>"
+        else:
+            feedback = f"<h3>❌ Incorreto.</h3><p>A resposta correta é: <b>{correct_answer}</b>.</p><p>{question_info['explicacao']}</p>"
+
+        return {
+            quiz_score_state: score,
+            quiz_feedback_text: feedback,
+            quiz_submit_button: gr.update(visible=False),
+            quiz_next_button: gr.update(visible=True),
+            quiz_choices: gr.update(interactive=False)
+        }
+        
+    def next_question(self, quiz_data, current_question_index, score):
+        current_question_index += 1
+        
+        if current_question_index < len(quiz_data["quiz"]):
+            next_q = quiz_data["quiz"][current_question_index]
+            return {
+                quiz_question_index_state: current_question_index,
+                quiz_question_text: next_q["pergunta"],
+                quiz_choices: gr.update(choices=next_q["alternativas"], value=None, interactive=True),
+                quiz_feedback_text: "",
+                quiz_submit_button: gr.update(visible=True),
+                quiz_next_button: gr.update(visible=False)
+            }
+        else:
+            total_questions = len(quiz_data["quiz"])
+            summary = f"<h2>🎉 Quiz Finalizado!</h2><h3>Sua pontuação: {score} de {total_questions}</h3>"
+            return {
+                quiz_container: gr.update(visible=False),
+                start_quiz_wrapper: gr.update(visible=True),
+                quiz_summary_text: summary,
+                quiz_feedback_text: ""
+            }
+
     def create_interface(self):
         with gr.Blocks(
-            title="🇮🇹 Tutor de Italiano IA - Estilo Master Ultimate",
-            theme=gr.themes.Soft(
-                primary_hue="indigo",
-                secondary_hue="blue",
-                neutral_hue="slate"
-            ),
+            title="🇮🇹 Tutor de Italiano IA",
+            theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="blue", neutral_hue="slate"),
             css=custom_css
         ) as interface:
-            # Header principal elegante
-            # Removido o gradiente de texto para manter a cor original do emoji
             gr.Markdown("# <span class='main-heading'>🇮🇹 Tutor de Italiano IA</span>")
             gr.Markdown("<span class='sub-heading'>Sua jornada personalizada para dominar o italiano com inteligência artificial 🚀</span>")
 
-            tips_visible_state = gr.State(False)
+            global quiz_data_state, quiz_score_state, quiz_question_index_state
+            quiz_data_state = gr.State()
+            quiz_score_state = gr.State()
+            quiz_question_index_state = gr.State()
 
             with gr.Tabs(elem_classes=["tabs"]):
-                # Chat principal aprimorado
                 with gr.TabItem("💬 Chat Inteligente"):
-                    gr.Markdown("### 🤖 Converse naturalmente e deixe a IA decidir como melhor te ajudar!")
-                    chatbot = gr.Chatbot(
-                        height=500,
-                        label="💬 Conversa com seu Tutor Pessoal",
-                        avatar_images=(
-                            "https://cdn-icons-png.flaticon.com/512/3233/3233519.png", # Ícone de usuário
-                            "https://cdn-icons-png.flaticon.com/512/4712/4712030.png"  # Ícone do bot
-                        ),
-                        bubble_full_width=False
-                    )
+                    chatbot = gr.Chatbot(height=500, label="💬 Conversa com seu Tutor Pessoal", avatar_images=("https://cdn-icons-png.flaticon.com/512/3233/3233519.png", "https://cdn-icons-png.flaticon.com/512/4712/4712030.png"), bubble_full_width=False)
                     with gr.Row():
                         with gr.Column(scale=4):
-                            msg = gr.Textbox(
-                                placeholder="💭 Pergunte sobre gramática, peça traduções, solicite quizzes ou apenas converse em italiano...",
-                                show_label=False
-                            )
+                            msg = gr.Textbox(placeholder="💭 Pergunte sobre gramática, peça traduções ou apenas converse em italiano...", show_label=False)
                         with gr.Column(scale=1):
                             send_btn = gr.Button("Enviar 🚀", elem_classes=["button-primary"])
-
-                    with gr.Row():
-                        clear = gr.Button("🗑️ Limpar Chat", elem_classes=["gr-button-secondary"])
-                        help_btn = gr.Button("💡 Dicas de Uso", elem_classes=["gr-button-secondary"])
-
-                    tips_area = gr.Markdown(
-                        """
-                        ### 💡 Dicas para Usar o Chat:
-                        - **Para traduções**: "Traduza 'Ciao come stai?'"
-                        - **Para gramática**: "Explique o passato prossimo"
-                        - **Para quiz**: "Quero fazer um quiz sobre verbos"
-                        - **Para recomendações**: "Recomende filmes italianos"
-                        - **Conversa livre**: Escreva em italiano ou português!
-                        
-                        🎯 **Atalhos**: Ctrl+Enter para enviar | Ctrl+L para limpar
-                        """,
-                        visible=False
-                    )
-
-                # Ferramentas rápidas redesenhadas
+                    clear = gr.Button("🗑️ Limpar Chat", elem_classes=["gr-button-secondary"])
+                    
                 with gr.TabItem("⚡ Ferramentas Rápidas"):
                     with gr.Row():
-                        # Tradutor profissional
                         with gr.Column(elem_classes=["quick-tools-section"]):
                             gr.Markdown("### <span class='tool-heading'>🔄 Tradutor Profissional</span>")
-                            gr.Markdown("*Sistema avançado de tradução com detecção automática de idioma*")
-                            translation_input = gr.Textbox(
-                                placeholder="✍️ Digite ou cole o texto que deseja traduzir...",
-                                label="📝 Texto para Tradução",
-                                lines=3
-                            )
-                            translation_output = gr.Textbox(
-                                label="🎯 Resultado da Tradução",
-                                interactive=False,
-                                lines=4
-                            )
+                            translation_input = gr.Textbox(placeholder="✍️ Digite ou cole o texto...", label="📝 Texto para Tradução", lines=3)
+                            translation_output = gr.Textbox(label="🎯 Resultado", interactive=False, lines=4)
                             translate_btn = gr.Button("🔄 Traduzir Agora", elem_classes=["button-primary"])
 
-                        # Gerador de quiz inteligente
                         with gr.Column(elem_classes=["quick-tools-section"]):
-                            gr.Markdown("### <span class='tool-heading'>🧠 Quiz Inteligente</span>")
-                            gr.Markdown("*Quizzes adaptativos para testar seu conhecimento*")
-                            quiz_output = gr.Textbox(
-                                label="🎲 Seu Quiz Personalizado",
-                                interactive=False,
-                                lines=6
-                            )
-                            quiz_btn = gr.Button("🎲 Gerar Novo Quiz", elem_classes=["button-primary"])
+                            gr.Markdown("### <span class='tool-heading'>🧠 Quiz Interativo</span>")
+                            
+                            global start_quiz_wrapper, quiz_summary_text
+                            with gr.Column(visible=True) as start_quiz_wrapper:
+                                quiz_topic_input = gr.Textbox(placeholder="Ex: verbos, artigos, preposições...", label="Tópico do Quiz (opcional)")
+                                quiz_btn = gr.Button("🎲 Gerar Novo Quiz", elem_classes=["button-primary"])
+                                quiz_summary_text = gr.Markdown()
 
+                            global quiz_container, quiz_question_text, quiz_choices, quiz_feedback_text, quiz_submit_button, quiz_next_button
+                            with gr.Column(visible=False) as quiz_container:
+                                quiz_question_text = gr.Markdown("### Pergunta do Quiz Aqui")
+                                quiz_choices = gr.Radio(label="Escolha uma alternativa:", interactive=True)
+                                quiz_feedback_text = gr.Markdown()
+                                with gr.Row():
+                                    quiz_submit_button = gr.Button("Responder", elem_classes=["button-primary"])
+                                    quiz_next_button = gr.Button("Próxima Pergunta →", visible=False)
+                    
                     with gr.Row():
-                        # Recomendações personalizadas
                         with gr.Column(elem_classes=["quick-tools-section"]):
-                            gr.Markdown("### <span class='tool-heading'>✨ Recomendações IA</span>")
-                            gr.Markdown("*Descubra conteúdo italiano baseado em seus gostos*")
-                            interest_input = gr.Textbox(
-                                placeholder="🎬 Ex: cinema, música, culinária, arte, história...",
-                                label="🎯 Seus Interesses"
-                            )
-                            recommendation_output = gr.Textbox(
-                                label="🌟 Recomendações Personalizadas",
-                                interactive=False,
-                                lines=6
-                            )
-                            recommend_btn = gr.Button("✨ Descobrir Conteúdo", elem_classes=["button-primary"])
-
-            # Configuração dos eventos
+                             gr.Markdown("### <span class='tool-heading'>✨ Recomendações IA</span>")
+                             interest_input = gr.Textbox(placeholder="🎬 Ex: cinema, música, culinária...", label="🎯 Seus Interesses")
+                             recommendation_output = gr.Textbox(label="🌟 Recomendações", interactive=False, lines=6)
+                             recommend_btn = gr.Button("✨ Descobrir Conteúdo", elem_classes=["button-primary"])
+            
             msg.submit(self.process_message, [msg, chatbot], [chatbot, msg])
             send_btn.click(self.process_message, [msg, chatbot], [chatbot, msg])
             clear.click(lambda: [], None, chatbot, queue=False)
 
-            # Ação de clique para alternar as dicas
-            help_btn.click(
-                lambda visible: not visible,
-                inputs=tips_visible_state,
-                outputs=tips_visible_state,
-                queue=False,
-                api_name=False
-            ).then(
-                lambda visible: gr.update(visible=visible),
-                inputs=tips_visible_state,
-                outputs=tips_area,
-                queue=False,
-                api_name=False
-            )
-
-            # Ferramentas rápidas
             translate_btn.click(self.quick_translation, translation_input, translation_output)
-            quiz_btn.click(self.quick_quiz, None, quiz_output)
             recommend_btn.click(self.quick_recommendation, interest_input, recommendation_output)
+
+            quiz_btn.click(
+                self.start_quiz, 
+                inputs=[quiz_topic_input],
+                outputs=[quiz_data_state, quiz_score_state, quiz_question_index_state, quiz_container, start_quiz_wrapper, quiz_question_text, quiz_choices, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_summary_text]
+            )
+            quiz_submit_button.click(
+                self.submit_answer,
+                inputs=[quiz_choices, quiz_data_state, quiz_question_index_state, quiz_score_state],
+                outputs=[quiz_score_state, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_choices]
+            )
+            quiz_next_button.click(
+                self.next_question,
+                inputs=[quiz_data_state, quiz_question_index_state, quiz_score_state],
+                outputs=[quiz_question_index_state, quiz_question_text, quiz_choices, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_container, start_quiz_wrapper, quiz_summary_text]
+            )
 
         return interface
 
