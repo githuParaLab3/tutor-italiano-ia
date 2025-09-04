@@ -1,40 +1,19 @@
 #!/usr/bin/env python3
 """
 Tutor de Italiano IA - Aplicação Principal
-==========================================
-
-Este é o ponto de entrada principal para o aplicativo Tutor de Italiano IA.
-O aplicativo usa LangChain para a lógica do agente e Gradio para a interface do usuário.
-
-Para executar:
-    python main.py
-
-Certifique-se de ter configurado as variáveis de ambiente necessárias no arquivo .env:
-    - GOOGLE_API_KEY: Chave da API do Google para o modelo Gemini
-    - GOOGLE_CSE_ID: ID do Custom Search Engine do Google (opcional, para pesquisa web)
 """
 
 import os
 import sys
 from dotenv import load_dotenv
 
-# Carrega as variáveis de ambiente
 load_dotenv()
 
 def check_environment():
     """Verifica se as variáveis de ambiente necessárias estão configuradas."""
-    required_vars = ["GOOGLE_API_KEY"]
-    missing_vars = []
-    
-    for var in required_vars:
-        if not os.getenv(var):
-            missing_vars.append(var)
-    
-    if missing_vars:
-        print("❌ Variáveis de ambiente faltando:")
-        for var in missing_vars:
-            print(f"   - {var}")
-        print("\nPor favor, configure essas variáveis no arquivo .env")
+    if not os.getenv("GOOGLE_API_KEY"):
+        print("❌ Variável de ambiente faltando: GOOGLE_API_KEY")
+        print("\nPor favor, configure esta variável no ficheiro .env")
         return False
     
     print("✅ Variáveis de ambiente configuradas corretamente!")
@@ -44,16 +23,15 @@ def main():
     """Função principal que inicia a aplicação."""
     print("🇮🇹 Iniciando o Tutor de Italiano IA...")
     
-    # Verifica o ambiente
     if not check_environment():
         sys.exit(1)
     
     try:
-        # Importa e inicia a interface Gradio
-        from ui.gradio_interface import create_gradio_app
+        # Atualize esta linha para importar do novo ficheiro
+        from ui.main_interface import create_main_interface
         
         print("🚀 Carregando a interface...")
-        app = create_gradio_app()
+        app = create_main_interface()
         
         print("🌐 Iniciando o servidor...")
         app.launch(
@@ -74,4 +52,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

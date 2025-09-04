@@ -72,3 +72,15 @@ Thumbs.db
 *.ini
 *.cfg
 *.local
+
+
+# --------------------
+# Logs e arquivos temporários
+# --------------------
+*.log
+*.pot
+*.tmp
+*.swp
+*.swo
+*.bak
+temp_audio/
