@@ -4,6 +4,8 @@ import re
 import os
 import uuid
 from gtts import gTTS
+
+# Importações de Agentes
 from agents.general_tutor_agent import create_general_tutor_agent
 from agents.translation_agent import create_translation_agent
 from agents.quiz_agent import create_quiz_agent
@@ -11,6 +13,10 @@ from agents.grammar_agent import create_grammar_agent
 from agents.recommendation_agent import create_recommendation_agent
 from agents.router_agent import create_router_agent
 from agents.roleplay_agent import create_roleplay_agent
+from agents.lessons_agent import create_lessons_agent
+
+# Importação do novo módulo Core
+from core.curriculum import get_levels, get_topics_for_level
 
 # --- Funções de Ajuda ---
 def clean_text_for_speech(text):
@@ -71,25 +77,19 @@ class ItalianTutorInterface:
         self.grammar_agent = create_grammar_agent()
         self.recommendation_agent = create_recommendation_agent()
         self.router_agent = create_router_agent()
+        self.lessons_agent = create_lessons_agent()
 
     def process_message(self, message, history):
         try:
-            if not message:
-                return history, ""
+            if not message: return history, ""
             route = self.router_agent.run(user_input=message).strip().lower()
             response = ""
-            if route == "traducao":
-                response = self.translation_agent.run(text=message, language="auto")
-            elif route == "quiz":
-                response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
-            elif route == "gramatica":
-                response = self.grammar_agent.run(concept=message)
-            elif route == "recomendacao":
-                response = self.recommendation_agent.run(interest=message)
-            elif route == "pesquisa":
-                response = self.general_tutor_chain.predict(input=f"Responda a seguinte pergunta sobre cultura italiana: {message}")
-            else: 
-                response = self.general_tutor_chain.predict(input=message)
+            if route == "traducao": response = self.translation_agent.run(text=message, language="auto")
+            elif route == "quiz": response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
+            elif route == "gramatica": response = self.grammar_agent.run(concept=message)
+            elif route == "recomendacao": response = self.recommendation_agent.run(interest=message)
+            elif route == "pesquisa": response = self.general_tutor_chain.predict(input=f"Responda a seguinte pergunta sobre cultura italiana: {message}")
+            else: response = self.general_tutor_chain.predict(input=message)
             history.append([message, response])
             return history, ""
         except Exception as e:
@@ -105,124 +105,87 @@ class ItalianTutorInterface:
         return None
 
     def quick_translation(self, text):
-        if not text:
-            return "📝 Por favor, digite o texto para traduzir."
-        try:
-            return self.translation_agent.run(text=text, language="auto")
-        except Exception as e:
-            return f"❌ Erro na tradução: {str(e)}"
+        if not text: return "📝 Por favor, digite o texto para traduzir."
+        try: return self.translation_agent.run(text=text, language="auto")
+        except Exception as e: return f"❌ Erro na tradução: {str(e)}"
 
     def quick_recommendation(self, interest):
-        if not interest:
-            return "🎯 Por favor, digite seus interesses para receber recomendações."
-        try:
-            return self.recommendation_agent.run(interest=interest)
-        except Exception as e:
-            return f"❌ Erro ao gerar recomendação: {str(e)}"
+        if not interest: return "🎯 Por favor, digite seus interesses para receber recomendações."
+        try: return self.recommendation_agent.run(interest=interest)
+        except Exception as e: return f"❌ Erro ao gerar recomendação: {str(e)}"
 
-    def _setup_question_ui(self, question):
-        """Função auxiliar para configurar a UI para a pergunta atual."""
+    def _get_question_ui_updates(self, question):
         if question['type'] == 'multipla_escolha':
-            return {
-                quiz_question_text: question["pergunta"],
-                quiz_choices: gr.update(choices=question["alternativas"], value=None, interactive=True, visible=True),
-                quiz_fill_in_input: gr.update(visible=False, value=""),
-            }
+            return (
+                question["pergunta"],
+                gr.update(choices=question["alternativas"], value=None, interactive=True, visible=True),
+                gr.update(visible=False, value="")
+            )
         elif question['type'] == 'preencher_lacuna':
-            return {
-                quiz_question_text: question["pergunta"],
-                quiz_choices: gr.update(visible=False, value=None),
-                quiz_fill_in_input: gr.update(visible=True, value="", interactive=True, placeholder="Digite a palavra que falta..."),
-            }
-        return {}
+            return (
+                question["pergunta"],
+                gr.update(visible=False, value=None),
+                gr.update(visible=True, value="", interactive=True, placeholder="Digite a palavra que falta...")
+            )
+        return question.get("pergunta", ""), gr.update(visible=False), gr.update(visible=False)
 
     def start_quiz(self, topic):
-        if not topic:
-            topic = "cultura e gramática básica"
+        if not topic: topic = "cultura e gramática básica"
         try:
             raw_response = self.quiz_agent.run(topic=topic)
             json_match = re.search(r'```json\n({.*?})\n```', raw_response, re.DOTALL)
             json_str = json_match.group(1) if json_match else raw_response
             quiz_data = json.loads(json_str)
+            first_question = quiz_data["quiz"][0]
             
-            score = 0
-            current_question_index = 0
-            first_question = quiz_data["quiz"][current_question_index]
-            
-            updates = self._setup_question_ui(first_question)
-            updates.update({
-                quiz_data_state: quiz_data,
-                quiz_score_state: score,
-                quiz_question_index_state: current_question_index,
-                quiz_container: gr.update(visible=True),
-                start_quiz_wrapper: gr.update(visible=False),
-                quiz_feedback_text: "",
-                quiz_submit_button: gr.update(visible=True),
-                quiz_next_button: gr.update(visible=False),
-                quiz_summary_text: ""
-            })
-            return updates
+            q_text_update, choices_update, fill_in_update = self._get_question_ui_updates(first_question)
+
+            return (
+                quiz_data, 0, 0, # states
+                gr.update(visible=True), gr.update(visible=False), # visibility wrappers
+                q_text_update, choices_update, fill_in_update, # question components
+                "", gr.update(visible=True), gr.update(visible=False), "" # feedback and buttons
+            )
         except Exception as e:
             error_message = f"❌ Desculpe, não consegui gerar o quiz. Tente novamente.\nErro: {str(e)}"
-            return {
-                quiz_container: gr.update(visible=False),
-                start_quiz_wrapper: gr.update(visible=True),
-                quiz_summary_text: error_message
-            }
+            return None, 0, 0, gr.update(visible=False), gr.update(visible=True), "", gr.update(), gr.update(), "", gr.update(), gr.update(), error_message
 
     def submit_answer(self, mc_choice, fill_in_answer, quiz_data, current_question_index, score):
         question_info = quiz_data["quiz"][current_question_index]
         correct_answer = question_info["resposta_correta"]
         user_answer = ""
-
-        if question_info['type'] == 'multipla_escolha':
-            user_answer = mc_choice
-        elif question_info['type'] == 'preencher_lacuna':
-            user_answer = fill_in_answer.strip()
-
-        # Comparação flexível
-        if user_answer.lower() == correct_answer.lower():
+        if question_info['type'] == 'multipla_escolha': user_answer = mc_choice
+        elif question_info['type'] == 'preencher_lacuna': user_answer = fill_in_answer.strip()
+        
+        if user_answer and user_answer.lower() == correct_answer.lower():
             score += 1
             feedback = f"<h3>✅ Correto!</h3><p>{question_info['explicacao']}</p>"
         else:
             feedback = f"<h3>❌ Incorreto.</h3><p>A resposta correta é: <b>{correct_answer}</b>.</p><p>{question_info['explicacao']}</p>"
-
-        return {
-            quiz_score_state: score,
-            quiz_feedback_text: feedback,
-            quiz_submit_button: gr.update(visible=False),
-            quiz_next_button: gr.update(visible=True),
-            quiz_choices: gr.update(interactive=False),
-            quiz_fill_in_input: gr.update(interactive=False)
-        }
+        
+        return score, feedback, gr.update(visible=False), gr.update(visible=True), gr.update(interactive=False), gr.update(interactive=False)
         
     def next_question(self, quiz_data, current_question_index, score):
         current_question_index += 1
-        
         if current_question_index < len(quiz_data["quiz"]):
             next_q = quiz_data["quiz"][current_question_index]
-            updates = self._setup_question_ui(next_q)
-            updates.update({
-                quiz_question_index_state: current_question_index,
-                quiz_feedback_text: "",
-                quiz_submit_button: gr.update(visible=True),
-                quiz_next_button: gr.update(visible=False)
-            })
-            return updates
+            q_text_update, choices_update, fill_in_update = self._get_question_ui_updates(next_q)
+            return (
+                current_question_index, q_text_update, choices_update, fill_in_update,
+                "", gr.update(visible=True), gr.update(visible=False), 
+                gr.update(visible=True), gr.update(visible=False), ""
+            )
         else:
             total_questions = len(quiz_data["quiz"])
             summary = f"<h2>🎉 Quiz Finalizado!</h2><h3>Sua pontuação: {score} de {total_questions}</h3>"
-            return {
-                quiz_container: gr.update(visible=False),
-                start_quiz_wrapper: gr.update(visible=True),
-                quiz_summary_text: summary,
-                quiz_feedback_text: ""
-            }
+            return (
+                current_question_index, "", gr.update(visible=False), gr.update(visible=False),
+                "", gr.update(visible=True), gr.update(visible=False),
+                gr.update(visible=False), gr.update(visible=True), summary
+            )
 
-    # --- Funções para o Agente de Role-Play ---
     def start_simulation(self, scenario):
-        if not scenario:
-            return None, None, gr.update(visible=True), gr.update(visible=False)
+        if not scenario: return None, [], gr.update(visible=True), gr.update(visible=False)
         try:
             agent = create_roleplay_agent()
             initial_response = agent.predict(input=scenario)
@@ -230,29 +193,42 @@ class ItalianTutorInterface:
             return agent, initial_history, gr.update(visible=False), gr.update(visible=True)
         except Exception as e:
             print(f"Erro ao iniciar simulação: {e}")
-            return None, None, gr.update(visible=True), gr.update(visible=False)
+            return None, [], gr.update(visible=True), gr.update(visible=False)
 
     def process_roleplay_message(self, message, history, agent):
-        if not message or not agent:
-            return history, ""
+        if not message or not agent: return history, ""
         try:
             response = agent.predict(input=message)
             history.append([message, response])
             return history, ""
         except Exception as e:
-            error_message = f"❌ Desculpe, ocorreu um erro na simulação: {str(e)}"
-            history.append([message, error_message])
+            history.append([message, f"❌ Desculpe, ocorreu um erro na simulação: {str(e)}"])
             return history, ""
 
     def end_simulation(self):
         return None, [], gr.update(visible=True), gr.update(visible=False), ""
+
+    def update_topics_dropdown(self, level):
+        topics = get_topics_for_level(level)
+        return gr.Dropdown(choices=topics, value=None, interactive=True)
+
+    def generate_lesson(self, level, topic):
+        if not level or not topic:
+            yield "Por favor, selecione um nível e um tópico para começar."
+            return
+        try:
+            yield "Gerando sua lição, por favor aguarde... 👨‍🏫"
+            response = self.lessons_agent.run(level=level, topic=topic)
+            yield response
+        except Exception as e:
+            yield f"❌ Desculpe, ocorreu um erro ao gerar a lição: {str(e)}"
 
     def create_interface(self):
         with gr.Blocks(title="🇮🇹 Tutor de Italiano IA", theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="blue", neutral_hue="slate"), css=custom_css) as interface:
             gr.Markdown("# <span class='main-heading'>🇮🇹 Tutor de Italiano IA</span>")
             gr.Markdown("<span class='sub-heading'>Sua jornada personalizada para dominar o italiano com inteligência artificial 🚀</span>")
 
-            global quiz_data_state, quiz_score_state, quiz_question_index_state
+            # Estados globais
             quiz_data_state = gr.State()
             quiz_score_state = gr.State()
             quiz_question_index_state = gr.State()
@@ -263,25 +239,31 @@ class ItalianTutorInterface:
                     chatbot = gr.Chatbot(height=500, label="💬 Conversa com seu Tutor Pessoal", avatar_images=("https://cdn-icons-png.flaticon.com/512/3233/3233519.png", "https://cdn-icons-png.flaticon.com/512/4712/4712030.png"), bubble_full_width=False, render_markdown=True)
                     audio_output = gr.Audio(label="🎧 Para ouvir, clique em uma mensagem do tutor", interactive=False)
                     with gr.Row():
-                        with gr.Column(scale=4):
-                            msg = gr.Textbox(placeholder="💭 Pergunte sobre gramática, peça traduções ou apenas converse em italiano...", show_label=False)
-                        with gr.Column(scale=1):
-                            send_btn = gr.Button("Enviar 🚀", elem_classes=["button-primary"])
+                        with gr.Column(scale=4): msg = gr.Textbox(placeholder="💭 Pergunte sobre gramática, peça traduções ou apenas converse em italiano...", show_label=False)
+                        with gr.Column(scale=1): send_btn = gr.Button("Enviar 🚀", elem_classes=["button-primary"])
                     clear = gr.Button("🗑️ Limpar Chat", elem_classes=["gr-button-secondary"])
 
+                with gr.TabItem("📚 Plano de Estudos"):
+                    gr.Markdown("### <span class='tool-heading'>📚 Seu Roteiro de Aprendizado</span>")
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            level_dropdown = gr.Dropdown(label="1. Escolha seu Nível", choices=get_levels())
+                        with gr.Column(scale=2):
+                            topic_dropdown = gr.Dropdown(label="2. Escolha a Lição", interactive=False)
+                    lesson_btn = gr.Button("📖 Gerar Lição", elem_classes=["button-primary"])
+                    lesson_output = gr.Markdown("Sua lição aparecerá aqui...")
+                
                 with gr.TabItem("🎭 Simulação (Role-play)"):
-                    with gr.Column() as roleplay_setup_wrapper:
+                    with gr.Column(visible=True) as roleplay_setup_wrapper:
                         gr.Markdown("### <span class='tool-heading'>🎭 Prática de Conversação</span>")
-                        rp_scenario_input = gr.Textbox(placeholder="Ex: Em um restaurante pedindo uma pizza, comprando um bilhete de trem...", label="✍️ Descreva o cenário que você quer praticar:")
+                        rp_scenario_input = gr.Textbox(placeholder="Ex: Em um restaurante pedindo uma pizza...", label="✍️ Descreva o cenário que você quer praticar:")
                         rp_start_btn = gr.Button("🎬 Iniciar Simulação", elem_classes=["button-primary"])
                     with gr.Column(visible=False) as roleplay_chat_wrapper:
                         rp_chatbot = gr.Chatbot(height=450, label="🎭 Simulação em Andamento", avatar_images=("https-icons-png.flaticon.com/512/3233/3233519.png", "https-icons-png.flaticon.com/512/1211/1211019.png"), bubble_full_width=False, render_markdown=True)
                         rp_audio_output = gr.Audio(label="🎧 Para ouvir, clique em uma mensagem do ator", interactive=False)
                         with gr.Row():
-                            with gr.Column(scale=4):
-                                rp_msg = gr.Textbox(placeholder="Digite sua resposta em italiano...", show_label=False)
-                            with gr.Column(scale=1):
-                                rp_send_btn = gr.Button("Enviar 💬", elem_classes=["button-primary"])
+                            with gr.Column(scale=4): rp_msg = gr.Textbox(placeholder="Digite sua resposta em italiano...", show_label=False)
+                            with gr.Column(scale=1): rp_send_btn = gr.Button("Enviar 💬", elem_classes=["button-primary"])
                         rp_end_btn = gr.Button("🎉 Terminar Simulação", elem_classes=["gr-button-secondary"])
                 
                 with gr.TabItem("⚡ Ferramentas Rápidas"):
@@ -293,7 +275,6 @@ class ItalianTutorInterface:
                             translate_btn = gr.Button("🔄 Traduzir Agora", elem_classes=["button-primary"])
                         with gr.Column(elem_classes=["quick-tools-section"]):
                             gr.Markdown("### <span class='tool-heading'>🧠 Quiz Interativo</span>")
-                            global start_quiz_wrapper, quiz_summary_text, quiz_container, quiz_question_text, quiz_choices, quiz_fill_in_input, quiz_feedback_text, quiz_submit_button, quiz_next_button
                             with gr.Column(visible=True) as start_quiz_wrapper:
                                 quiz_topic_input = gr.Textbox(placeholder="Ex: verbos, artigos, preposições...", label="Tópico do Quiz (opcional)")
                                 quiz_btn = gr.Button("🎲 Gerar Novo Quiz", elem_classes=["button-primary"])
@@ -322,15 +303,35 @@ class ItalianTutorInterface:
             translate_btn.click(self.quick_translation, translation_input, translation_output)
             recommend_btn.click(self.quick_recommendation, interest_input, recommendation_output)
             
-            quiz_btn.click(self.start_quiz, inputs=[quiz_topic_input], outputs=[quiz_data_state, quiz_score_state, quiz_question_index_state, quiz_container, start_quiz_wrapper, quiz_question_text, quiz_choices, quiz_fill_in_input, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_summary_text])
-            quiz_submit_button.click(self.submit_answer, inputs=[quiz_choices, quiz_fill_in_input, quiz_data_state, quiz_question_index_state, quiz_score_state], outputs=[quiz_score_state, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_choices, quiz_fill_in_input])
-            quiz_next_button.click(self.next_question, inputs=[quiz_data_state, quiz_question_index_state, quiz_score_state], outputs=[quiz_question_index_state, quiz_question_text, quiz_choices, quiz_fill_in_input, quiz_feedback_text, quiz_submit_button, quiz_next_button, quiz_container, start_quiz_wrapper, quiz_summary_text])
+            quiz_outputs = [
+                quiz_data_state, quiz_score_state, quiz_question_index_state, 
+                quiz_container, start_quiz_wrapper, quiz_question_text, 
+                quiz_choices, quiz_fill_in_input, quiz_feedback_text, 
+                quiz_submit_button, quiz_next_button, quiz_summary_text
+            ]
+            quiz_btn.click(self.start_quiz, inputs=[quiz_topic_input], outputs=quiz_outputs)
+            
+            submit_outputs = [
+                quiz_score_state, quiz_feedback_text, quiz_submit_button, 
+                quiz_next_button, quiz_choices, quiz_fill_in_input
+            ]
+            quiz_submit_button.click(self.submit_answer, inputs=[quiz_choices, quiz_fill_in_input, quiz_data_state, quiz_question_index_state, quiz_score_state], outputs=submit_outputs)
+            
+            next_q_outputs = [
+                quiz_question_index_state, quiz_question_text, quiz_choices, 
+                quiz_fill_in_input, quiz_feedback_text, quiz_submit_button, 
+                quiz_next_button, quiz_container, start_quiz_wrapper, quiz_summary_text
+            ]
+            quiz_next_button.click(self.next_question, inputs=[quiz_data_state, quiz_question_index_state, quiz_score_state], outputs=next_q_outputs)
 
             rp_start_btn.click(self.start_simulation, inputs=[rp_scenario_input], outputs=[roleplay_agent_state, rp_chatbot, roleplay_setup_wrapper, roleplay_chat_wrapper])
             rp_msg.submit(self.process_roleplay_message, [rp_msg, rp_chatbot, roleplay_agent_state], [rp_chatbot, rp_msg])
             rp_send_btn.click(self.process_roleplay_message, [rp_msg, rp_chatbot, roleplay_agent_state], [rp_chatbot, rp_msg])
             rp_chatbot.select(self.generate_audio_from_selection, None, rp_audio_output)
             rp_end_btn.click(self.end_simulation, inputs=[], outputs=[roleplay_agent_state, rp_chatbot, roleplay_setup_wrapper, roleplay_chat_wrapper, rp_scenario_input])
+
+            level_dropdown.change(fn=self.update_topics_dropdown, inputs=level_dropdown, outputs=topic_dropdown)
+            lesson_btn.click(fn=self.generate_lesson, inputs=[level_dropdown, topic_dropdown], outputs=lesson_output)
 
         return interface
 
