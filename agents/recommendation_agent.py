@@ -6,6 +6,6 @@ from prompts.recommendation_prompts import get_recommendation_prompt
 def create_recommendation_agent():
     llm = get_gemini_llm()
     prompt = PromptTemplate.from_template(get_recommendation_prompt(interest='{interest}'))
-    return LLMChain(llm=llm, prompt=prompt)
+    return prompt | llm
 
 

@@ -21,4 +21,4 @@ Input do usuário: {user_input}
 Categoria:
 """
     prompt = PromptTemplate.from_template(prompt_template)
-    return LLMChain(llm=llm, prompt=prompt)
+    return prompt | llm

@@ -6,6 +6,6 @@ from prompts.grammar_prompts import get_grammar_lesson_prompt
 def create_grammar_agent():
     llm = get_gemini_llm()
     prompt = PromptTemplate.from_template(get_grammar_lesson_prompt(concept='{concept}'))
-    return LLMChain(llm=llm, prompt=prompt)
+    return prompt | llm
 
 

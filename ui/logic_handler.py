@@ -1,8 +1,8 @@
 import gradio as gr
 import json
 import re
+import uuid
 
-# Importações de Agentes
 from agents.general_tutor_agent import create_general_tutor_agent
 from agents.translation_agent import create_translation_agent
 from agents.quiz_agent import create_quiz_agent
@@ -12,9 +12,9 @@ from agents.router_agent import create_router_agent
 from agents.roleplay_agent import create_roleplay_agent
 from agents.lessons_agent import create_lessons_agent
 
-# Importação do Core
 from core.curriculum import get_topics_for_level
 from .helpers import text_to_speech
+from langchain_core.messages import HumanMessage, AIMessage
 
 class LogicHandler:
     """
@@ -30,9 +30,13 @@ class LogicHandler:
         self.recommendation_agent = create_recommendation_agent()
         self.router_agent = create_router_agent()
         self.lessons_agent = create_lessons_agent()
+        self.roleplay_agent = create_roleplay_agent()
+        self.general_chat_session_id = str(uuid.uuid4())
+        self.roleplay_session_id = None
 
     def process_message(self, message, history):
-        history.append([message, " Pensando..."])
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": " Pensando..."})
         yield history, ""
 
         try:
@@ -41,29 +45,36 @@ class LogicHandler:
                 yield history, ""
                 return
 
-            route = self.router_agent.run(user_input=message).strip().lower()
+            route = self.router_agent.invoke({"user_input": message}).content.strip().lower()
             response = ""
 
-            if route == "traducao": response = self.translation_agent.run(text=message, language="auto")
-            elif route == "quiz": response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
-            elif route == "gramatica": response = self.grammar_agent.run(concept=message)
-            elif route == "recomendacao": response = self.recommendation_agent.run(interest=message)
-            elif route == "pesquisa": response = self.general_tutor_chain.predict(input=f"Responda a seguinte pergunta sobre cultura italiana: {message}")
-            else: response = self.general_tutor_chain.predict(input=message)
+            if route == "traducao":
+                response = self.translation_agent.invoke({"text": message, "language": "auto"}).content
+            elif route == "quiz":
+                response = "Você pode iniciar um quiz na aba 'Ferramentas Rápidas'!"
+            elif route == "gramatica":
+                response = self.grammar_agent.invoke({"concept": message}).content
+            elif route == "recomendacao":
+                response = self.recommendation_agent.invoke({"interest": message}).content
+            elif route == "pesquisa":
+                response = self.general_tutor_chain.invoke({"input": f"Responda a seguinte pergunta sobre cultura italiana: {message}"}, config={"configurable": {"session_id": self.general_chat_session_id}}).content
+            else:
+                response = self.general_tutor_chain.invoke({"input": message}, config={"configurable": {"session_id": self.general_chat_session_id}}).content
 
-            history[-1][1] = response
+            history[-1]["content"] = response
             yield history, ""
 
         except Exception as e:
             error_message = f" Desculpe, ocorreu um erro inesperado: {str(e)}"
             if history:
-                history[-1][1] = error_message
+                history[-1]["content"] = error_message
             else:
-                history.append([message, error_message])
+                history.append({"role": "user", "content": message})
+                history.append({"role": "assistant", "content": error_message})
             yield history, ""
     
     def generate_audio_from_selection(self, evt: gr.SelectData):
-        if evt.value and evt.index[1] is not None:
+        if evt.value:
             bot_message = evt.value
             audio_path = text_to_speech(bot_message)
             return gr.Audio(value=audio_path, autoplay=True, interactive=False)
@@ -75,7 +86,7 @@ class LogicHandler:
             return
         yield " Traduzindo..."
         try:
-            yield self.translation_agent.run(text=text, language="auto")
+            yield self.translation_agent.invoke({"text": text, "language": "auto"}).content
         except Exception as e:
             yield f" Erro na tradução: {str(e)}"
 
@@ -85,7 +96,7 @@ class LogicHandler:
             return
         yield " Buscando recomendações..."
         try:
-            yield self.recommendation_agent.run(interest=interest)
+            yield self.recommendation_agent.invoke({"interest": interest}).content
         except Exception as e:
             yield f" Erro ao gerar recomendação: {str(e)}"
 
@@ -114,11 +125,11 @@ class LogicHandler:
             gr.update(visible=False), gr.update(visible=True), 
             "", gr.update(), gr.update(), 
             "", gr.update(), gr.update(), 
-            "🎲 Gerando seu quiz, por favor aguarde..."
+            " Gerando seu quiz, por favor aguarde..."
         )
 
         try:
-            raw_response = self.quiz_agent.run(topic=topic)
+            raw_response = self.quiz_agent.invoke({"topic": topic}).content
             json_match = re.search(r'```json\n({.*?})\n```', raw_response, re.DOTALL)
             json_str = json_match.group(1) if json_match else raw_response
             quiz_data = json.loads(json_str)
@@ -177,40 +188,42 @@ class LogicHandler:
             yield None, [], gr.update(visible=True), gr.update(visible=False)
             return
         
-        # Show loading state in the chatbot
-        initial_history_loading = [[None, " Preparando a simulação, aguarde..."]]
+        initial_history_loading = [{"role": "assistant", "content": " Preparando a simulação, aguarde..."}]
         yield None, initial_history_loading, gr.update(visible=False), gr.update(visible=True)
 
         try:
-            agent = create_roleplay_agent()
-            initial_response = agent.predict(input=scenario)
-            initial_history = [[None, initial_response]]
-            yield agent, initial_history, gr.update(visible=False), gr.update(visible=True)
+            self.roleplay_session_id = str(uuid.uuid4())
+            initial_response = self.roleplay_agent.invoke({"input": scenario}, config={"configurable": {"session_id": self.roleplay_session_id}})
+            initial_history = [{"role": "assistant", "content": initial_response.content}]
+            yield self.roleplay_session_id, initial_history, gr.update(visible=False), gr.update(visible=True)
         except Exception as e:
             error_message = f" Erro ao iniciar simulação: {e}"
-            yield None, [[None, error_message]], gr.update(visible=True), gr.update(visible=False)
+            yield None, [{"role": "assistant", "content": error_message}], gr.update(visible=True), gr.update(visible=False)
 
-    def process_roleplay_message(self, message, history, agent):
-        if not message or not agent:
+    def process_roleplay_message(self, message, history, session_id):
+        if not message or not session_id:
             yield history, ""
             return
             
-        history.append([message, " Pensando..."])
+        history.append({"role": "user", "content": message})
+        history.append({"role": "assistant", "content": " Pensando..."})
         yield history, ""
 
         try:
-            response = agent.predict(input=message)
-            history[-1][1] = response
+            response = self.roleplay_agent.invoke({"input": message}, config={"configurable": {"session_id": session_id}})
+            history[-1]["content"] = response.content
             yield history, ""
         except Exception as e:
             error_message = f" Desculpe, ocorreu um erro na simulação: {str(e)}"
             if history:
-                history[-1][1] = error_message
+                history[-1]["content"] = error_message
             else:
-                history.append([message, error_message])
+                history.append({"role": "user", "content": message})
+                history.append({"role": "assistant", "content": error_message})
             yield history, ""
 
     def end_simulation(self):
+        self.roleplay_session_id = None
         return None, [], gr.update(visible=True), gr.update(visible=False), ""
 
     def update_topics_dropdown(self, level):
@@ -223,7 +236,7 @@ class LogicHandler:
             return
         try:
             yield "Gerando sua lição, por favor aguarde..."
-            response = self.lessons_agent.run(level=level, topic=topic)
+            response = self.lessons_agent.invoke({"level": level, "topic": topic}).content
             yield response
         except Exception as e:
             yield f" Desculpe, ocorreu um erro ao gerar a lição: {str(e)}"

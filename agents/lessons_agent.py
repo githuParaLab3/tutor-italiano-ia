@@ -15,4 +15,4 @@ def create_lessons_agent():
     
     prompt = PromptTemplate.from_template(prompt_template)
     
-    return LLMChain(llm=llm, prompt=prompt)
+    return prompt | llm

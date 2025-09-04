@@ -8,7 +8,7 @@ def create_roleplay_tab(logic_handler):
             rp_scenario_input = gr.Textbox(placeholder="Ex: Em um restaurante pedindo uma pizza...", label="Descreva o cenário que você quer praticar:")
             rp_start_btn = gr.Button("Iniciar Simulação", elem_classes=["button-primary"])
         with gr.Column(visible=False) as roleplay_chat_wrapper:
-            rp_chatbot = gr.Chatbot(height=450, label="Simulação em Andamento", avatar_images=("https://cdn-icons-png.flaticon.com/512/3233/3233519.png", "https://cdn-icons-png.flaticon.com/512/1211/1211019.png"), bubble_full_width=False, render_markdown=True)
+            rp_chatbot = gr.Chatbot(type="messages", height=450, label="Simulação em Andamento", avatar_images=("https://cdn-icons-png.flaticon.com/512/3233/3233519.png", "https://cdn-icons-png.flaticon.com/512/1211/1211019.png"), bubble_full_width=False, render_markdown=True)
             rp_audio_output = gr.Audio(label="Para ouvir, clique em uma mensagem do ator", interactive=False)
             with gr.Row():
                 with gr.Column(scale=4):

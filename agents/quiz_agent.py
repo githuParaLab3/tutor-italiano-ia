@@ -10,4 +10,4 @@ def create_quiz_agent():
     
     prompt = PromptTemplate.from_template(template)
     
-    return LLMChain(llm=llm, prompt=prompt)
+    return prompt | llm
