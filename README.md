@@ -92,9 +92,13 @@ tutor-italiano-ia/
 │   └── curriculum.py
 │
 ├── prompts/
+│   ├── general_tutor_prompts.py
 │   ├── grammar_prompts.py
 │   ├── lessons_prompts.py
-│   └── ... (outros ficheiros de prompts)
+│   ├── quiz_prompts.py
+│   ├── recommendation_prompts.py
+│   ├── roleplay_prompts.py
+│   └── translation_prompts.py
 │
 └── ui/
     ├── tabs/
@@ -106,6 +110,7 @@ tutor-italiano-ia/
     ├── logic_handler.py
     ├── main_interface.py
     └── styles.py
+
 ```
 
 ### Descrição dos Componentes
