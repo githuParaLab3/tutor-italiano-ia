@@ -65,7 +65,7 @@ Crie um arquivo `.env` na raiz do projeto com a sua chave da API do Google:
 GOOGLE_API_KEY=sua_chave_da_api_do_google_aqui
 ```
 
-## Estrutura de Ficheiros
+## Estrutura do Projeto
 
 O projeto foi refatorado para uma arquitetura mais limpa e modular, especialmente na interface do utilizador.
 
