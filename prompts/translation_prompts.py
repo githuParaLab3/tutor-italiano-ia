@@ -1,5 +1,4 @@
 def get_translation_prompt(text_to_translate, target_language):
-    # O target_language não é mais estritamente necessário, mas o mantemos pela estrutura do agente.
     return f"""
 Você é um tradutor especialista e um consultor linguístico, especializado em italiano e português. Sua tarefa é traduzir o texto a seguir, mas com um valor agregado significativo.
 

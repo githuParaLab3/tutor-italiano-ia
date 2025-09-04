@@ -2,7 +2,6 @@ import gradio as gr
 import json
 import re
 
-# Importações de Agentes
 from agents.general_tutor_agent import create_general_tutor_agent
 from agents.translation_agent import create_translation_agent
 from agents.quiz_agent import create_quiz_agent
@@ -12,7 +11,6 @@ from agents.router_agent import create_router_agent
 from agents.roleplay_agent import create_roleplay_agent
 from agents.lessons_agent import create_lessons_agent
 
-# Importação do Core
 from core.curriculum import get_topics_for_level
 from .helpers import text_to_speech
 
@@ -32,7 +30,7 @@ class LogicHandler:
         self.lessons_agent = create_lessons_agent()
 
     def process_message(self, message, history):
-        history.append([message, "🤔 Pensando..."])
+        history.append([message, "Pensando..."])
         yield history, ""
 
         try:
@@ -55,7 +53,7 @@ class LogicHandler:
             yield history, ""
 
         except Exception as e:
-            error_message = f"❌ Desculpe, ocorreu um erro inesperado: {str(e)}"
+            error_message = f"Desculpe, ocorreu um erro inesperado: {str(e)}"
             if history:
                 history[-1][1] = error_message
             else:
@@ -71,23 +69,23 @@ class LogicHandler:
 
     def quick_translation(self, text):
         if not text:
-            yield "📝 Por favor, digite o texto para traduzir."
+            yield "Por favor, digite o texto para traduzir."
             return
-        yield "🔄 Traduzindo..."
+        yield "Traduzindo..."
         try:
             yield self.translation_agent.run(text=text, language="auto")
         except Exception as e:
-            yield f"❌ Erro na tradução: {str(e)}"
+            yield f"Erro na tradução: {str(e)}"
 
     def quick_recommendation(self, interest):
         if not interest:
-            yield "🎯 Por favor, digite seus interesses para receber recomendações."
+            yield "Por favor, digite seus interesses para receber recomendações."
             return
-        yield "🧠 Buscando recomendações..."
+        yield "Buscando recomendações..."
         try:
             yield self.recommendation_agent.run(interest=interest)
         except Exception as e:
-            yield f"❌ Erro ao gerar recomendação: {str(e)}"
+            yield f"Erro ao gerar recomendação: {str(e)}"
 
     def _get_question_ui_updates(self, question):
         if question['type'] == 'multipla_escolha':
@@ -108,13 +106,13 @@ class LogicHandler:
         if not topic:
             topic = "cultura e gramática básica"
 
-        # Show a loading message in the summary text area
+        
         yield (
-            None, 0, 0, # states
-            gr.update(visible=False), gr.update(visible=True), # wrappers
-            "", gr.update(), gr.update(), # question elements
-            "", gr.update(), gr.update(), # feedback and buttons
-            "🎲 Gerando seu quiz, por favor aguarde..." # summary text
+            None, 0, 0,
+            gr.update(visible=False), gr.update(visible=True), 
+            "", gr.update(), gr.update(), 
+            "", gr.update(), gr.update(), 
+            "Gerando seu quiz, por favor aguarde..." 
         )
 
         try:
@@ -132,7 +130,7 @@ class LogicHandler:
                 "", gr.update(visible=True), gr.update(visible=False), ""
             )
         except Exception as e:
-            error_message = f"❌ Desculpe, não consegui gerar o quiz. Tente novamente.\nErro: {str(e)}"
+            error_message = f"Desculpe, não consegui gerar o quiz. Tente novamente.\nErro: {str(e)}"
             yield (
                 None, 0, 0,
                 gr.update(visible=False), gr.update(visible=True),
@@ -148,9 +146,9 @@ class LogicHandler:
         elif question_info['type'] == 'preencher_lacuna': user_answer = fill_in_answer.strip()
         if user_answer and user_answer.lower() == correct_answer.lower():
             score += 1
-            feedback = f"<h3>✅ Correto!</h3><p>{question_info['explicacao']}</p>"
+            feedback = f"<h3>Correto!</h3><p>{question_info['explicacao']}</p>"
         else:
-            feedback = f"<h3>❌ Incorreto.</h3><p>A resposta correta é: <b>{correct_answer}</b>.</p><p>{question_info['explicacao']}</p>"
+            feedback = f"<h3>Incorreto.</h3><p>A resposta correta é: <b>{correct_answer}</b>.</p><p>{question_info['explicacao']}</p>"
         return score, feedback, gr.update(visible=False), gr.update(visible=True), gr.update(interactive=False), gr.update(interactive=False)
         
     def next_question(self, quiz_data, current_question_index, score):
@@ -165,7 +163,7 @@ class LogicHandler:
             )
         else:
             total_questions = len(quiz_data["quiz"])
-            summary = f"<h2>🎉 Quiz Finalizado!</h2><h3>Sua pontuação: {score} de {total_questions}</h3>"
+            summary = f"<h2>Quiz Finalizado!</h2><h3>Sua pontuação: {score} de {total_questions}</h3>"
             return (
                 current_question_index, "", gr.update(visible=False), gr.update(visible=False),
                 "", gr.update(visible=True), gr.update(visible=False),
@@ -178,7 +176,7 @@ class LogicHandler:
             return
         
         # Show loading state in the chatbot
-        initial_history_loading = [[None, "🎭 Preparando a simulação, aguarde..."]]
+        initial_history_loading = [[None, "Preparando a simulação, aguarde..."]]
         yield None, initial_history_loading, gr.update(visible=False), gr.update(visible=True)
 
         try:
@@ -187,7 +185,7 @@ class LogicHandler:
             initial_history = [[None, initial_response]]
             yield agent, initial_history, gr.update(visible=False), gr.update(visible=True)
         except Exception as e:
-            error_message = f"❌ Erro ao iniciar simulação: {e}"
+            error_message = f"Erro ao iniciar simulação: {e}"
             yield None, [[None, error_message]], gr.update(visible=True), gr.update(visible=False)
 
     def process_roleplay_message(self, message, history, agent):
@@ -195,7 +193,7 @@ class LogicHandler:
             yield history, ""
             return
             
-        history.append([message, "🤔 Pensando..."])
+        history.append([message, "Pensando..."])
         yield history, ""
 
         try:
@@ -203,7 +201,7 @@ class LogicHandler:
             history[-1][1] = response
             yield history, ""
         except Exception as e:
-            error_message = f"❌ Desculpe, ocorreu um erro na simulação: {str(e)}"
+            error_message = f"Desculpe, ocorreu um erro na simulação: {str(e)}"
             if history:
                 history[-1][1] = error_message
             else:
@@ -226,4 +224,4 @@ class LogicHandler:
             response = self.lessons_agent.run(level=level, topic=topic)
             yield response
         except Exception as e:
-            yield f"❌ Desculpe, ocorreu um erro ao gerar a lição: {str(e)}"
+            yield f"Desculpe, ocorreu um erro ao gerar a lição: {str(e)}"

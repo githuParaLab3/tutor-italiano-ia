@@ -1,5 +1,3 @@
-# core/curriculum.py
-
 """
 Define a estrutura do currículo de italiano, organizado por níveis do CEFR (A1-C2).
 Cada tópico pode ser usado para gerar uma lição detalhada.

@@ -300,4 +300,4 @@ Se encontrar problemas ou tiver dúvidas:
 
 ---
 
-**Buona fortuna con il tuo apprendimento dell'italiano! 🇮🇹✨**
+**Buona fortuna con il tuo apprendimento dell'italiano!**

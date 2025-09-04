@@ -15,35 +15,34 @@ def create_main_interface():
     with gr.Blocks(title="🇮🇹 Tutor de Italiano IA", theme=gr.themes.Soft(primary_hue="indigo", secondary_hue="blue", neutral_hue="slate"), css=custom_css) as interface:
         
         gr.Markdown("# <span class='main-heading'>🇮🇹 Tutor de Italiano IA</span>")
-        gr.Markdown("<span class='sub-heading'>Sua jornada personalizada para dominar o italiano com inteligência artificial 🚀</span>")
+        gr.Markdown("<span class='sub-heading'>Sua jornada personalizada para dominar o italiano com inteligência artificial</span>")
 
         with gr.Tabs(elem_classes=["tabs"]):
-            # CORREÇÃO: Passar o logic_handler para cada função de criação de aba
+            
             chatbot, msg, send_btn, clear, audio_output = create_chat_tab(logic_handler)
             level_dropdown, topic_dropdown, lesson_btn, lesson_output = create_lesson_plan_tab(logic_handler)
             rp_state, rp_setup, rp_scenario, rp_start, rp_chat, rp_chatbot, rp_audio, rp_msg, rp_send, rp_end = create_roleplay_tab(logic_handler)
             tools_cmps = create_quick_tools_tab(logic_handler)
 
-        # --- Central de Event Listeners (aqui permanece igual) ---
         
-        # Aba de Chat
+    
         msg.submit(logic_handler.process_message, [msg, chatbot], [chatbot, msg])
         send_btn.click(logic_handler.process_message, [msg, chatbot], [chatbot, msg])
         clear.click(lambda: (None, None), None, [chatbot, audio_output], queue=False)
         chatbot.select(logic_handler.generate_audio_from_selection, None, audio_output)
 
-        # Aba de Plano de Estudos
+       
         level_dropdown.change(fn=logic_handler.update_topics_dropdown, inputs=level_dropdown, outputs=topic_dropdown)
         lesson_btn.click(fn=logic_handler.generate_lesson, inputs=[level_dropdown, topic_dropdown], outputs=lesson_output)
         
-        # Aba de Role-play
+
         rp_start.click(logic_handler.start_simulation, inputs=[rp_scenario], outputs=[rp_state, rp_chatbot, rp_setup, rp_chat])
         rp_msg.submit(logic_handler.process_roleplay_message, [rp_msg, rp_chatbot, rp_state], [rp_chatbot, rp_msg])
         rp_send.click(logic_handler.process_roleplay_message, [rp_msg, rp_chatbot, rp_state], [rp_chatbot, rp_msg])
         rp_chatbot.select(logic_handler.generate_audio_from_selection, None, rp_audio)
         rp_end.click(logic_handler.end_simulation, [], [rp_state, rp_chatbot, rp_setup, rp_chat, rp_scenario])
 
-        # Aba de Ferramentas Rápidas
+ 
         tools_cmps["translation"][2].click(logic_handler.quick_translation, tools_cmps["translation"][0], tools_cmps["translation"][1])
         tools_cmps["recommendation"][2].click(logic_handler.quick_recommendation, tools_cmps["recommendation"][0], tools_cmps["recommendation"][1])
         
