@@ -257,7 +257,6 @@ Cada agente tem uma responsabilidade específica:
 - Prompts otimizados para cada tipo de tarefa
 
 #### 🔧 Ferramentas
-- **Web Search**: Integração com Google Search API
 - **Extensível**: Arquitetura permite adição de novas ferramentas
 
 ### Vantagens da Arquitetura
