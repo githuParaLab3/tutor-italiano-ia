@@ -1,5 +1,3 @@
-# prompts/lessons_prompts.py
-
 def get_lesson_prompt(level, topic):
     """
     Gera um prompt para criar uma lição estruturada sobre um tópico específico.

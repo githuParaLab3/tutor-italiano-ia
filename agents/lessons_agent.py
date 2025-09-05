@@ -1,5 +1,3 @@
-# agents/lessons_agent.py
-
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from agents.gemini_model import get_gemini_llm
