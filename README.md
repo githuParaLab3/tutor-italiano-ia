@@ -29,7 +29,7 @@ Este projeto foi desenvolvido para:
 ### Tecnologias Utilizadas
 
 - **LangChain**: Framework para desenvolvimento de aplicações com LLMs.
-- **Google Gemini**: Modelo de linguagem avançado via `langchain-google-genai`.
+- **Google Gemini**: Modelo de linguagem avançado Gemini 2.5 Flash Lite utilizado via `langchain-google-genai`.
 - **Gradio**: Interface web interativa e responsiva.
 - **gTTS**: Biblioteca do Google para funcionalidade de Text-to-Speech.
 - **Python**: Linguagem de programação principal.
